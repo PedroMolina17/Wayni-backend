@@ -1,0 +1,6 @@
+@Wayni_HostAddress = http://localhost:5101
+
+GET {{Wayni_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
