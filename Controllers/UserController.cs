@@ -52,13 +52,13 @@ namespace Wayni.Controllers
 
             if (await _context.Usuarios.AnyAsync(u => u.Email == usuario.Email))
             {
-                ModelState.AddModelError("Email", "El email ya está en uso.");
+                ModelState.AddModelError("Email", "El email ya estÃ¡ en uso.");
                 return BadRequest(ModelState);
             }
 
             if (await _context.Usuarios.AnyAsync(u => u.PhoneNumber == usuario.PhoneNumber))
             {
-                ModelState.AddModelError("PhoneNumber", "El número de teléfono ya está en uso.");
+                ModelState.AddModelError("PhoneNumber", "El nÃºmero de telÃ©fono ya estÃ¡ en uso.");
                 return BadRequest(ModelState);
             }
 
@@ -70,7 +70,6 @@ namespace Wayni.Controllers
             }
             catch (DbUpdateException ex)
             {
-                // Verificar si el error es por duplicidad
                 if (ex.InnerException != null && ex.InnerException.Message.Contains("Duplicate entry"))
                 {
                     ModelState.AddModelError("", "Error de duplicado en la base de datos.");
@@ -91,23 +90,21 @@ namespace Wayni.Controllers
                 return BadRequest("ID mismatch.");
             }
 
-            // Verificar si el usuario existe
             var existingUser = await _context.Usuarios.FindAsync(id);
             if (existingUser == null)
             {
                 return NotFound();
             }
 
-            // Verificar si el email o número de teléfono ya están en uso por otro usuario
             if (await _context.Usuarios.AnyAsync(u => u.Email == usuario.Email && u.Id != id))
             {
-                ModelState.AddModelError("Email", "El email ya está en uso.");
+                ModelState.AddModelError("Email", "El email ya estÃ¡ en uso.");
                 return BadRequest(ModelState);
             }
 
             if (await _context.Usuarios.AnyAsync(u => u.PhoneNumber == usuario.PhoneNumber && u.Id != id))
             {
-                ModelState.AddModelError("PhoneNumber", "El número de teléfono ya está en uso.");
+                ModelState.AddModelError("PhoneNumber", "El nÃºmero de telÃ©fono ya estÃ¡ en uso.");
                 return BadRequest(ModelState);
             }
 
