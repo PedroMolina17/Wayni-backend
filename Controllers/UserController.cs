@@ -50,14 +50,32 @@ namespace Wayni.Controllers
                 return BadRequest(ModelState);
             }
 
+            if (await _context.Usuarios.AnyAsync(u => u.Email == usuario.Email))
+            {
+                ModelState.AddModelError("Email", "El email ya está en uso.");
+                return BadRequest(ModelState);
+            }
+
+            if (await _context.Usuarios.AnyAsync(u => u.PhoneNumber == usuario.PhoneNumber))
+            {
+                ModelState.AddModelError("PhoneNumber", "El número de teléfono ya está en uso.");
+                return BadRequest(ModelState);
+            }
+
             _context.Usuarios.Add(usuario);
 
             try
             {
                 await _context.SaveChangesAsync();
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException ex)
             {
+                // Verificar si el error es por duplicidad
+                if (ex.InnerException != null && ex.InnerException.Message.Contains("Duplicate entry"))
+                {
+                    ModelState.AddModelError("", "Error de duplicado en la base de datos.");
+                    return Conflict(ModelState); 
+                }
                 return StatusCode(500, "No se pudo guardar el usuario. Intente nuevamente.");
             }
 
@@ -70,10 +88,37 @@ namespace Wayni.Controllers
         {
             if (id != usuario.Id)
             {
-                return BadRequest();
+                return BadRequest("ID mismatch.");
             }
 
-            _context.Entry(usuario).State = EntityState.Modified;
+            // Verificar si el usuario existe
+            var existingUser = await _context.Usuarios.FindAsync(id);
+            if (existingUser == null)
+            {
+                return NotFound();
+            }
+
+            // Verificar si el email o número de teléfono ya están en uso por otro usuario
+            if (await _context.Usuarios.AnyAsync(u => u.Email == usuario.Email && u.Id != id))
+            {
+                ModelState.AddModelError("Email", "El email ya está en uso.");
+                return BadRequest(ModelState);
+            }
+
+            if (await _context.Usuarios.AnyAsync(u => u.PhoneNumber == usuario.PhoneNumber && u.Id != id))
+            {
+                ModelState.AddModelError("PhoneNumber", "El número de teléfono ya está en uso.");
+                return BadRequest(ModelState);
+            }
+
+            // Actualizar los campos del usuario existente con los nuevos valores
+            existingUser.Name = usuario.Name;
+            existingUser.Username = usuario.Username;
+            existingUser.Email = usuario.Email;
+            existingUser.PhoneNumber = usuario.PhoneNumber;
+            existingUser.Password = usuario.Password;
+
+            _context.Entry(existingUser).State = EntityState.Modified;
 
             try
             {
@@ -93,6 +138,7 @@ namespace Wayni.Controllers
 
             return NoContent();
         }
+
 
         // DELETE: api/usuario/{id}
         [HttpDelete("{id}")]
